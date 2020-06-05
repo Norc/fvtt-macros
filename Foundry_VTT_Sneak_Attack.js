@@ -1,4 +1,38 @@
-let sneakIconPath = 'icons/svg/cowled.svg';
+//		DISCLAIMER:		This macro is heavily based on the original D&D 5e Rage Macro masterwork written by Felix#6196.
+//						Norc#5108 created and is maintaining this macro.
+//
+//						Updates:	1.	2020/06/05: Initial version.
+
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//!!!	Bonus Tip: Sneak Attack as a Condition                                                                                                                       
+//!!!	If you use the Combat Utility Belt module's Condition Lab, try adding a condition called "Sneaky" with the same icon 			   
+//!!!	as the optional sneak attack icon overlay, 'icons/svg/mystery-man-black.svg' by default.  See EXPERIMENTAL MACRO ICON/NAME TOGGLE below.
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//!!!   OPTIONAL TOKEN ICON-	On by default. If a path to a sneak attack icon is defined, it displays like a condition on the sneaking rogue.
+//!!!							To use a different icon, manually change the filepath below or leave it empty ('') to disable the effect.
+//!!!
+				const sneakIconPath = 'icons/svg/mystery-man-black.svg';
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//!!!	EXPERIMENTAL MACRO ICON/NAME TOGGLE		If enabled, the macro icon and name toggles based on whether the rogue is currently sneaking. 
+//!!!											CAUTIONS: 	1. 	This feature is off by default and is intended for ADVANCED USERS ONLY. 
+//!!!														2. 	Requires configuration using "The Furnace" module for a player to run!
+//!!!															The GM needs to grant The Furnace's "Run as GM" permission for this macro.
+//!!!														3. 	Works best with only one rogue using this feature at a time.
+
+				//To auto-toggle the macro's icon/name, override toggleMacro to true below.
+				const toggleMacro = false;
+
+				//To use a different icon, manually change the filepath here
+				const stopSneakIconPath = 'icons/svg/cowled.svg';
+
+				//You must update the following constant to this macro's exact name for the macro icon toggling to work.
+				const sneakMacroName = 'Sneak Attack';
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 let toggleResult = false;
 let enabled = false;
 let errorReason = '';
@@ -13,21 +47,31 @@ let oldRDmg = '';
 let macroActor = actor;
 let macroToken = token;
 
-const sneakAttackFeatureName = 'Sneak Attack';
-const rogueClassName = 'Rogue';
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//!!!	BASIC LOCALIZATION SUPPORT				Sets names of D&D5E features as constants instead of hardcoding to allow easier translation.
+//!!!											Sets error messages as constants also for easier translation.
+
+				const rogueClassName = 'Rogue';
+				const sneakAttackFeatureName = 'Sneak Attack';
+
+				const errorSelectRogue = 'Please select a single rogue token.';
+				const warnMacroNotFound = ' is not a valid macro name, please fix. Sneak attack toggle successful but unable to alter macro.';
+				const errorSelectToken = 'Please select a token.';
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
 //check to ensure token is selected and attempt to define the sneak attack feature
 if (macroActor !== null && macroActor !== undefined) {
 	sneakAttack = macroActor.items.find(i => i.name == `${sneakAttackFeatureName}`);
 } else {
-errorReason = 'Please select a token';
+errorReason = `${errorSelectToken}`;
 }
 
 //check to ensure token is a rogue
 if (errorReason == '' && macroActor.items.find(i => i.name == `${rogueClassName}`) !== undefined) {
 	rogue = macroActor.items.find(i => i.name == `${rogueClassName}`);
 } else {
-	errorReason = 'Please select a single rogue token.';
+	errorReason = `${errorSelectRogue}`;
 }
 
 console.log(`Error reason is: ${errorReason}`);
@@ -94,41 +138,36 @@ if (errorReason == '') {
 
 	}	
 	
-	// toggle Sneaky icon, if Sneaky path is defined above
-	(async () => { 
-		toggleResult = await macroToken.toggleEffect(sneakIconPath);
-		if (toggleResult == enabled) macroToken.toggleEffect(sneakIconPath);  
-	})();
-
-	//mark or unmark character's token with Sneaky effect icon
+	//mark or unmark character's token with Sneaky effect icon, if sneakIconPath is defined
 	(async () => { 
 		toggleResult = await macroToken.toggleEffect(sneakIconPath);
 		if (toggleResult == enabled) macroToken.toggleEffect(sneakIconPath);  
 	})();
 
 	//toggle macro icon and name, if enabled
-	let sneakyMacroImgPath = 'systems/dnd5e/icons/skills/shadow_17.jpg';
-	let stopSneakyMacroImgPath = 'systems/dnd5e/icons/skills/yellow_11.jpg';
-	let sneakMacroName = 'Sneak Attack';
-	let sneakMacro = game.macros.getName(sneakMacroName);
-		//Also check for name of macro in its "off" form
-		if (sneakMacro == null || sneakMacro == undefined) {
-			sneakMacro = game.macros.getName('Stop ' + sneakMacroName);
-		}
-	let obj = {};
-	if ( (sneakMacro !== null && sneakMacro !== undefined) && 
-			+ (stopSneakyMacroImgPath !== null && stopSneakyMacroImgPath !== undefined && stopSneakyMacroImgPath !== '') ) {
-		if (enabled) {
-		  obj['img'] = sneakyMacroImgPath;
-		  obj['name'] = sneakMacroName;
+	if (toggleMacro) {
+//		Norc's preferred icons, not sure if publicly available
+//		sneakyMacroImgPath = 'systems/dnd5e/icons/skills/shadow_17.jpg';
+//		stopSneakIconPath = 'systems/dnd5e/icons/skills/yellow_11.jpg';
+		let sneakMacro = game.macros.getName(sneakMacroName);
+			//Also check for name of macro in its "off" form
+			if (sneakMacro == null || sneakMacro == undefined) {
+				sneakMacro = game.macros.getName('Stop ' + sneakMacroName);
+			}
+		let obj = {};
+		if ( (sneakMacro !== null && sneakMacro !== undefined) && 
+				+ (stopSneakIconPath !== null && stopSneakIconPath !== undefined && stopSneakIconPath !== '') ) {
+			if (enabled) {
+			obj['img'] = sneakIconPath;
+			obj['name'] = sneakMacroName;
+			} else {
+			obj['img'] = stopSneakIconPath;
+			obj['name'] = 'Stop ' + sneakMacroName;
+			}
+			sneakMacro.update(obj);
 		} else {
-		  obj['img'] = stopSneakyMacroImgPath;
-		  obj['name'] = 'Stop ' + sneakMacroName;
+		ui.notifications.warn(`${sneakMacroName} ${warnMacroNotFound}`);			
 		}
-		sneakMacro.update(obj);
-	} else {
-	ui.notifications.warn("Sneak Attack macro named " + `${sneakMacroName}` + " not found. Sneak toggle successful but unable to toggle macro icon.");
-		
 	}
 
 } else {
