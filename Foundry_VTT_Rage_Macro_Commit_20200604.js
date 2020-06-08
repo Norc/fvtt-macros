@@ -35,6 +35,8 @@
 //!!!	If you use the Combat Utility Belt module's Condition Lab, try adding a condition called "Raging" with the same icon 			   
 //!!!	as the optional rage icon overlay, 'icons/svg/explosion.svg' by default.  See EXPERIMENTAL MACRO ICON/NAME TOGGLE section below.
 //!!!
+//!!!	Bonus Tip 4: Obsidian Sheet Compatibility
+//!!!	If using Obsidian module, try replacing "Barbarian" with "brb" as the barbClassName value in Localization Support below.
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -92,10 +94,15 @@ const barbClassName = 'Barbarian';
 const rageFeatureName = 'Rage';
 const bearTotemFeatureName = 'Totem Spirit: Bear';
 
-const errorSelectBarbarian = 'Please select a single barbarian token.';;
+const rageMsg = ' is RAAAAAGING!'
+const endRageMsg =  ' is no longer raging.';
+
+const errorSelectBarbarian = 'Please select a single barbarian token.';
 const errorNoRage = ' does not have any rage left, time for a long rest!';
 const warnMacroNotFound = ' is not a valid macro name, please fix. Rage toggle successful but unable to alter macro.';
 const errorSelectToken = 'Please select a token.';
+const failRevert = 'Failed to revert global melee weapon attack bonus, please check manually.';
+
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -109,21 +116,51 @@ if (macroActor !== undefined && macroActor !== null) {
 		ui.notifications.warn(`${errorSelectBarbarian}`);
 	}
 	if (barb !== undefined && barb !== null) {
-		chatMsg = '';
+		chatMsg = `${macroActor.name} + rageMsg`;
 		let enabled = false;
 		// store the state of the rage toggle in flags
 		if (macroActor.data.flags.rageMacro !== null && macroActor.data.flags.rageMacro !== undefined) {
 			enabled = true;
 		}
 		
+		//Calculate rage value for use in damage reversion and application
+		// Determining the barbarian level
+		let barblvl = barb.data.data.levels;
+			
+		// Formula to determine the rage bonus damage depending on barbarian level
+		let lvlCorrection =  barblvl === 16 || barblvl === 17 ? 1 : 0;
+		let rageDmg = 2 + Math.floor(barblvl / 9) + lvlCorrection;
+		let dmg = JSON.parse(JSON.stringify(macroActor.data.data.bonuses.mwak.damage));
+
 		// if rage is active, disable it
 		if (enabled) {
-			chatMsg = `${macroActor.name} is no longer raging.`;
+			chatMsg = `${macroActor.name} ${endRageMsg}`;
 			// reset resistances and melee weapon attack bonus
 			let obj = {};
 			obj['flags.rageMacro'] = null;
-			obj['data.traits.dr'] = macroActor.data.flags.rageMacro.oldResistances;		
-			obj['data.bonuses.mwak.damage'] = macroActor.data.flags.rageMacro.oldDmg;	
+			//revert damage resistances
+			obj['data.traits.dr'] = macroActor.data.flags.rageMacro.oldResistances;
+
+			//carefully revert global mwak bonus to original value
+			if (dmg == rageDmg || dmg == null || dmg == undefined || dmg == '' || dmg == 0){
+				console.log('removing simple rage damage');
+				obj['data.bonuses.mwak.damage']='';
+			} else {
+				console.log('removing complex rage damage');
+				let patt = `\\s\\+\\s${rageDmg}($|[^0123456789dkrxcm(@{])`;
+				let result = dmg.search(patt);
+				if (result !== -1) {
+					let len = ('' + rageDmg).length;
+					let origDmg = duplicate(dmg);
+					let firstHalfDmg = duplicate(dmg).substring(0,result);
+					//Test String: 2d6 + 2 + 2d6
+					let lastHalfDmg = duplicate(dmg).substring(result+3+len, origDmg.length);
+					dmg = `${firstHalfDmg}${lastHalfDmg}`;
+					obj['data.bonuses.mwak.damage']=dmg;
+				} else {
+					ui.notifications.warn(`${failRevert}`);
+				}
+			}
 			macroActor.update(obj);
 			
 		// if rage is disabled, enable it
@@ -136,7 +173,7 @@ if (macroActor !== undefined && macroActor !== null) {
 				let resourceKey = Object.keys(macroActor.data.data.resources).filter(k => macroActor.data.data.resources[k].label === `${rageFeatureName}`).shift();
 				if (resourceKey && (macroActor.data.data.resources[resourceKey].value > 0 || !preventNegativeResource)) {
 					hasAvailableResource = true;
-					newResources[resourceKey].value--;					
+					newResources[resourceKey].value--;
 					obj['data.resources'] = newResources 
 					macroActor.update(obj);
 				}
@@ -152,7 +189,7 @@ if (macroActor !== undefined && macroActor !== null) {
 			
 			//activate rage if there is rage available, or if it is okay to rage with 0 resources
 			if (!noRage) {
-				chatMsg = `${macroActor.name} is RAAAAAGING!`;
+				chatMsg = `${macroActor.name} ${rageMsg}`;
 				// update resistance
 				let obj = {};
 				// storing old resistances in flags to restore later
@@ -181,23 +218,16 @@ if (macroActor !== undefined && macroActor !== null) {
 			
 				// For Strength barbarians, update global melee weapon attack bonus to include rage bonus
 				if (strAttacks) {
-					// Preserve old mwak damage bonus if there was one
-					let dmg = macroActor.data.data.bonuses.mwak.damage;
-					if (dmg==null || dmg == undefined || dmg == '') dmg = 0;
+					// Preserve old mwak damage bonus if there was one, just in case
 					obj['flags.rageMacro.oldDmg'] = JSON.parse(JSON.stringify(dmg));
-			
-					// Determining the barbarian level
-					let barblvl = barb.data.data.levels;
-			
-					// Formula to determine the rage bonus damage depending on barbarian level
-					let lvlCorrection =  barblvl === 16 || barblvl === 17 ? 1 : 0;
-					let rageDmg = 2 + Math.floor(barblvl / 9) + lvlCorrection;
 				
 					//actually add the bonus rage damage to the previous bonus damage
-					//respect roll formulas if present.
-					if (parseInt(dmg) == dmg) {
-						obj['data.bonuses.mwak.damage'] = parseInt(dmg) + rageDmg;
+					//respect roll formulas by doing string addition if value is already present.
+					if (dmg == null || dmg == undefined || dmg == 0 || dmg == '') {
+						console.log('Adding simple rage damage');
+						obj['data.bonuses.mwak.damage'] = rageDmg;
 					} else {
+						console.log('Adding complex rage damage');
 					obj['data.bonuses.mwak.damage'] = `${dmg} + ${rageDmg}`;
 					}
 					
