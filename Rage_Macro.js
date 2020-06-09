@@ -5,9 +5,9 @@
 //		UPDATES:		1.	Fixed errors resulting from declarations of "actor" and "token" in a script macro. 
 //							Added automatic Totem Spirit: Bear detection and resistance application 
 //							PLEASE NOTE: A minor update to the Totem Spirit item's name in the character sheet is needed if 
-//							the VTTA Beyond Integration was not used to create sheet. See Bonus Tip 1 below
+//							the VTTA Beyond Integration was not used to create sheet. See Bonus Tip 2 below
 //							Added error messages for trying to rage with no token or no barbarian selected
-//						2.	(Felix) Added resource/usage deduction and errors (re-added after accidentally overwriting the addition) 
+//						2.	(Felix) Added resource/usage deduction and errors (re-added after accidentally overwriting the addition)
 //							Fixed rage damage at level 8
 //						3.	(2020/05/30) "Version 2.0" 	
 //							Implemented Felix's idea to use global melee weapon attack bonus instead of modifying items
@@ -26,22 +26,29 @@
 //							Enhanced localization support
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//!!!	Bonus Tip 1: Bear Totem Spirit Barbs
-//!!!	If you chose the Spirit Seeker Primal path, and at level 3 you chose the Bear Totem Spirit (resistance to all non-psychic damage), 
-//!!!	in your 5E character sheet, double-check that the name of your Totem Spirit feature to EXACTLY "Totem Spirit: Bear".  Note: Importing
-//!!!	via VTTA Beyond Integration uses this name already. The macro then automatically adds the extra Bear Totem Spirit resistances.
+//!!!   Bonus Tip 1: 		Optional Rage Resource Consumption
+//!!!	To automatically use and track Rage, you must have a resource exactly named "Rage" on your character sheet. This text can be changed
+//!!!	by altering the value for "rageResourceName" in the LOCALIZATION SUPPORT section below).
+//!!!	Note: 	Importing via VTTA Beyond Integration uses this text already. The macro can then automatically detect the Rage resource.
 //!!!
-//!!!	Bonus Tip 2: Thrown Weapons
+//!!!	Bonus Tip 2: 		Bear Totem Spirit Barbs
+//!!!	If you chose the Spirit Seeker Primal path, and at level 3 you chose the Bear Totem Spirit (resistance to all non-psychic damage), 
+//!!!	in your 5E character sheet, double-check that the name of your Totem Spirit feature to EXACTLY "Totem Spirit: Bear". This text can be
+//!!!	changed by altering the value for "bearTotemFeatureName" in the LOCALIZATION SUPPORT section below).
+//!!!	Note: 	Importing via VTTA Beyond Integration uses this text already. The macro then automatically adds the extra 
+//!!!			Bear Totem Spirit resistances.
+//!!!
+//!!!	Bonus Tip 3: 		Thrown Weapons
 //!!!	When a barb throws a weapon using strength, typically a javelin but also possibly a dagger, dart, sword, bar table etc, the rage bonus
 //!!!	should not be added because it is a ranged attack. However, D&D5E calls javelins and daggers Melee Weapons, because technically they
 //!!!	are both. To solve this issue, if you always throw the weapon, click the weapon's details and change the attack type to "Ranged Weapon
 //!!!	Attack" in the Action Type dropdown. If you want, you can add a second copy of the item (with no weight/quantity) to use for meleeing.
 //!!!
-//!!!	Bonus Tip 3: The Rage Condition
-//!!!	If you use the Combat Utility Belt module's Condition Lab, try adding a condition called "Raging" with the same icon 			   
+//!!!	Bonus Tip 4: 		The Rage Condition
+//!!!	If you use the Combat Utility Belt module's Condition Lab, try adding a condition called "Raging" with the same icon
 //!!!	as the optional rage icon overlay, 'icons/svg/explosion.svg' by default.  See EXPERIMENTAL MACRO ICON/NAME TOGGLE section below.
 //!!!
-//!!!	Bonus Tip 4: Obsidian Sheet Compatibility
+//!!!	Bonus Tip 5: 		Obsidian Sheet Compatibility
 //!!!	If using Obsidian module, try replacing "Barbarian" with "brb" as the barbClassName value in LOCALIZATION SUPPORT below.
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -49,7 +56,7 @@
 //!!!	OPTIONAL TOKEN ICON-	On by default. If a path to a rage icon is defined, it displays like a condition on the raging barbarian.
 //!!!							To use a different icon, manually change the filepath below or leave it empty ('') to disable the effect.
 //!!!
-			const rageIconPath = 'icons/svg/explosion.svg';
+const rageIconPath = 'icons/svg/explosion.svg';
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -62,14 +69,14 @@
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //!!!	OPTIONAL NON-STRENGTH BARBARIAN SUPPORT		ONLY override to FALSE if your barbarian does not use Strength to make melee attacks
-//!!!												and therefore does not get the Rage bonus to melee weapon attack damage. 
+//!!!												and therefore does not get the Rage bonus to melee weapon attack damage.
 //!!!
 			const strAttacks = true;
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//!!!	EXPERIMENTAL MACRO ICON/NAME TOGGLE		If enabled, the macro icon and name toggles based on the barbarian's rage state. 
-//!!!											CAUTIONS: 	1. 	This feature is off by default and is intended for ADVANCED USERS ONLY. 
+//!!!	EXPERIMENTAL MACRO ICON/NAME TOGGLE		If enabled, the macro icon and name toggles based on the barbarian's rage state.
+//!!!											CAUTIONS: 	1. 	This feature is off by default and is intended for ADVANCED USERS ONLY.
 //!!!														2. 	Requires configuration using "The Furnace" module for a player to run!
 //!!!															The GM needs to grant The Furnace's "Run as GM" permission for this macro.
 //!!!														3. 	Works best with only one barbarian using this feature at a time.
@@ -100,7 +107,7 @@ let macroToken = token;
 //!!!
 			//MUST MATCH VALUES IN CHARACTER SHEET (if present)
 			const barbClassName = 'Barbarian';
-			const rageFeatureName = 'Rage';
+			const rageResourceName = 'Rage';
 			const bearTotemFeatureName = 'Totem Spirit: Bear';
 
 			//All remaining values may be changed freely
@@ -121,7 +128,7 @@ let macroToken = token;
 //main
 //check to see if Actor exists and is a barbarian
 if (macroActor !== undefined && macroActor !== null) {
-				
+
 	// get the barbarian class item
 	barb = macroActor.items.find(i => i.name === `${barbClassName}`);
 	if (barb == undefined) {
@@ -133,11 +140,10 @@ if (macroActor !== undefined && macroActor !== null) {
 		// Store the state of the rage toggle flags that indicate if rage is active or not
 		if (macroActor.data.flags.rageMacro !== null && macroActor.data.flags.rageMacro !== undefined) {
 			enabled = true;
-		}
-
-		// Store whether there is a rage damage bonus currently active
-		if (macroActor.data.flags.rageDmgAdded == 'true') {
-			rageDmgAdded = true;
+				// Store whether there is also a rage damage bonus currently active
+				if (macroActor.data.flags.rageMacro["rageDmgAdded"] == true) {
+					rageDmgAdded = true;
+				}
 		}
 
 		//Calculate rage value for use in damage reversion and application
@@ -189,7 +195,7 @@ if (macroActor !== undefined && macroActor !== null) {
 				let newResources = duplicate(macroActor.data.data.resources)
 				let obj = {}
 				// Look for Resources under the Core macroActor data
-				let resourceKey = Object.keys(macroActor.data.data.resources).filter(k => macroActor.data.data.resources[k].label === `${rageFeatureName}`).shift();
+				let resourceKey = Object.keys(macroActor.data.data.resources).filter(k => macroActor.data.data.resources[k].label === `${rageResourceName}`).shift();
 				if (resourceKey && (macroActor.data.data.resources[resourceKey].value > 0 || !preventNegativeResource)) {
 					hasAvailableResource = true;
 					newResources[resourceKey].value--;
@@ -201,7 +207,7 @@ if (macroActor !== undefined && macroActor !== null) {
 					noRage=true;
 				}
 			}
-			
+
 			//activate rage if there is rage available, or if it is okay to rage with 0 resources
 			if (!noRage) {
 				chatMsg = `${macroActor.name} ${rageMsg}`;
@@ -230,10 +236,10 @@ if (macroActor !== undefined && macroActor !== null) {
 				}
 				obj['data.traits.dr'] = newResistance;
 				macroActor.update(obj);
-			
+
 				// For Strength barbarians, update global melee weapon attack bonus to include rage bonus
 				if (strAttacks) {
-					obj['flags.rageMacro.rageDmgAdded'] = 'true';
+					obj['flags.rageMacro.rageDmgAdded'] = true;
 					// Preserve old mwak damage bonus if there was one, just in case
 					obj['flags.rageMacro.oldDmg'] = JSON.parse(JSON.stringify(dmg));
 					//actually add the bonus rage damage to the previous bonus damage
@@ -245,12 +251,7 @@ if (macroActor !== undefined && macroActor !== null) {
 						console.log('Adding complex rage damage');
 						obj['data.bonuses.mwak.damage'] = `${dmg} + ${rageDmg}`;
 					}
-					
 					macroActor.update(obj);
-					if (macroActor.data.flags.rageDmgAdded == 'true') {
-						rageDmgAdded = true;
-						console.log(true);
-					}
 				}
 			}
 		}
@@ -281,7 +282,7 @@ if (macroActor !== undefined && macroActor !== null) {
 				rageMacro.update(obj);
 			} else {
 			if (toggleMacro == true) ui.notifications.warn(`${rageMacroName} ${warnMacroNotFound}`);
-			}	
+			}
 		}
 	}
 } else ui.notifications.warn(errorSelectToken);
