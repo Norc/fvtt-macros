@@ -143,7 +143,7 @@ if (macroActor !== undefined && macroActor !== null) {
 		//Calculate rage value for use in damage reversion and application
 		// Determining the barbarian level
 		let barblvl = barb.data.data.levels;
-			
+
 		// Formula to determine the rage bonus damage depending on barbarian level
 		let lvlCorrection =  barblvl === 16 || barblvl === 17 ? 1 : 0;
 		let rageDmg = 2 + Math.floor(barblvl / 9) + lvlCorrection;
@@ -236,7 +236,6 @@ if (macroActor !== undefined && macroActor !== null) {
 					obj['flags.rageMacro.rageDmgAdded'] = 'true';
 					// Preserve old mwak damage bonus if there was one, just in case
 					obj['flags.rageMacro.oldDmg'] = JSON.parse(JSON.stringify(dmg));
-				
 					//actually add the bonus rage damage to the previous bonus damage
 					//respect roll formulas by doing string addition if value is already present.
 					if (dmg == null || dmg == undefined || dmg == 0 || dmg == '') {
@@ -248,6 +247,10 @@ if (macroActor !== undefined && macroActor !== null) {
 					}
 					
 					macroActor.update(obj);
+					if (macroActor.data.flags.rageDmgAdded == 'true') {
+						rageDmgAdded = true;
+						console.log(true);
+					}
 				}
 			}
 		}
