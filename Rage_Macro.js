@@ -2,22 +2,28 @@
 //						Norc#5108 is now maintaining this macro along with continued support from Felix.
 //
 //
-//		Updates:		1. 	Fixed errors resulting from declarations of "actor" and "token" in a script macro. 
-//						2. 	Added automatic Totem Spirit: Bear detection and resistance application 
+//		UPDATES:		1.	Fixed errors resulting from declarations of "actor" and "token" in a script macro. 
+//							Added automatic Totem Spirit: Bear detection and resistance application 
 //							PLEASE NOTE: A minor update to the Totem Spirit item's name in the character sheet is needed if 
 //							the VTTA Beyond Integration was not used to create sheet. See Bonus Tip 1 below
-//						3. 	Added error messages for trying to rage with no token or no barbarian selected
-//						4. 	(Felix) added resource/usage deduction and errors (re-added after accidentally overwriting the addition) 
-//						5. 	(Felix, 2020/05/29) Fixed rage damage at level 8
-//						6. 	(2020/05/30) Implemented Felix's idea to use global melee weapon attack bonus instead of modifying items
-//						7. 	(2020/05/30) Improved Rage icon toggling to be more reliable
-//						8. 	(2020/05/30) Removed code from the resource management that created dependency on The Furnace Advanced Macros
-//						9. 	(2020/05/30) Implemented Felix's fix for issue where new resistances and rage uses were not saving properly
-//						10.	(2020/05/30) Fixed rage damage formula again...
-//						11.	(2020/05/30) Added basic support for non-strength Based barbarians (Dex, Hexblade)
-//						12.	(2020/05/30) Added optional ability to toggle the icon and name of the macro itself based on current raging state.
-//						13. (2020/06/04) Fixed bug with experimental macro name/icon toggle only by renaming "actor" and "token"
-//						14. (2020/06/04) Added basic localization support to allow searching for translated class features
+//							Added error messages for trying to rage with no token or no barbarian selected
+//						2.	(Felix) Added resource/usage deduction and errors (re-added after accidentally overwriting the addition) 
+//							Fixed rage damage at level 8
+//						3.	(2020/05/30) "Version 2.0" 	
+//							Implemented Felix's idea to use global melee weapon attack bonus instead of modifying items
+//							Improved Rage icon toggling to be more reliable
+//							Removed code from the resource management that created dependency on The Furnace Advanced Macros
+//							Implemented Felix's fix for issue where new resistances and rage uses were not saving properly
+//							Fixed rage damage formula again...
+//							Added basic support for non-strength Based barbarians (Dex, Hexblade)
+//							Added optional ability to toggle the icon and name of the macro itself based on current raging state.
+//						4.	(2020/06/04) 
+//							Fixed bug with experimental macro name/icon toggle only by renaming "actor" and "token"
+//							Added basic localization support to allow searching for translated class features
+//						5.	(2020/06/09)
+//							Rework to rage damage logic under the hood for edge case (other changes to bonus damage mid-combat) 
+//							Removed logic that was causing multiple character sheets to open in some cases
+//							Enhanced localization support
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //!!!	Bonus Tip 1: Bear Totem Spirit Barbs
@@ -31,34 +37,34 @@
 //!!!	are both. To solve this issue, if you always throw the weapon, click the weapon's details and change the attack type to "Ranged Weapon
 //!!!	Attack" in the Action Type dropdown. If you want, you can add a second copy of the item (with no weight/quantity) to use for meleeing.
 //!!!
-//!!!	Bonus Tip 3: The Rage Condition                                                                                                                       
+//!!!	Bonus Tip 3: The Rage Condition
 //!!!	If you use the Combat Utility Belt module's Condition Lab, try adding a condition called "Raging" with the same icon 			   
 //!!!	as the optional rage icon overlay, 'icons/svg/explosion.svg' by default.  See EXPERIMENTAL MACRO ICON/NAME TOGGLE section below.
 //!!!
 //!!!	Bonus Tip 4: Obsidian Sheet Compatibility
-//!!!	If using Obsidian module, try replacing "Barbarian" with "brb" as the barbClassName value in Localization Support below.
+//!!!	If using Obsidian module, try replacing "Barbarian" with "brb" as the barbClassName value in LOCALIZATION SUPPORT below.
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//!!!   OPTIONAL TOKEN ICON-	On by default. If a path to a rage icon is defined, it displays like a condition on the raging barbarian.
+//!!!	OPTIONAL TOKEN ICON-	On by default. If a path to a rage icon is defined, it displays like a condition on the raging barbarian.
 //!!!							To use a different icon, manually change the filepath below or leave it empty ('') to disable the effect.
 //!!!
-				const rageIconPath = 'icons/svg/explosion.svg';
+			const rageIconPath = 'icons/svg/explosion.svg';
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//!!!   OPTIONAL RESOURCE DEDUCTION 	On by default. First option automatically subtracts from the Rage Resource if enabled.
+//!!!	OPTIONAL RESOURCE DEDUCTION 	On by default. First option automatically subtracts from the Rage Resource if enabled.
 //!!!									Second option prevents raging if no Rage resource is left. Set to false if you do not want this.
 
-				const deductResource = true;
-				const preventNegativeResource = true;
+			const deductResource = true;
+			const preventNegativeResource = true;
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//!!!   OPTIONAL NON-STRENGTH BARBARIAN SUPPORT		ONLY override to FALSE if your barbarian does not use Strength to make melee attacks
+//!!!	OPTIONAL NON-STRENGTH BARBARIAN SUPPORT		ONLY override to FALSE if your barbarian does not use Strength to make melee attacks
 //!!!												and therefore does not get the Rage bonus to melee weapon attack damage. 
-//!!!		
-				const strAttacks = true;
+//!!!
+			const strAttacks = true;
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -68,14 +74,14 @@
 //!!!															The GM needs to grant The Furnace's "Run as GM" permission for this macro.
 //!!!														3. 	Works best with only one barbarian using this feature at a time.
 
-				//To auto-toggle the macro's icon/name, override toggleMacro to true below.
-				const toggleMacro = false;
+			//To auto-toggle the macro's icon/name, override toggleMacro to true below.
+			const toggleMacro = false;
 
-				//To use a different icon, manually change the filepath here
-				const stopRageIconPath = 'icons/svg/unconscious.svg';
+			//To use a different icon, manually change the filepath here
+			const stopRageIconPath = 'icons/svg/unconscious.svg';
 
-				//You must update the following constant to this macro's exact name for the macro icon toggling to work.
-				const rageMacroName = 'Rage';
+			//You must update the following constant to this macro's exact name for the macro icon toggling to work.
+			const rageMacroName = 'Rage';
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 //declarations
@@ -83,26 +89,32 @@ let barb = '';
 let chatMsg = '';
 let bear = '';
 let noRage = false;
+let rageDmgAdded = false;
 let toggleResult = false;
 let macroActor = actor;
 let macroToken = token;
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//!!!	BASIC LOCALIZATION SUPPORT				Sets names of D&D5E features as constants instead of hardcoding to allow easier translation.
-//!!!											Sets error messages as constants also for easier translation.
-const barbClassName = 'Barbarian';
-const rageFeatureName = 'Rage';
-const bearTotemFeatureName = 'Totem Spirit: Bear';
+//!!!	LOCALIZATION SUPPORT				Sets names of D&D5E features as constants instead of hardcoding to allow easier translation.
+//!!!										Sets error messages and flavor text as constants also for easier translation.
+//!!!
+			//MUST MATCH VALUES IN CHARACTER SHEET (if present)
+			const barbClassName = 'Barbarian';
+			const rageFeatureName = 'Rage';
+			const bearTotemFeatureName = 'Totem Spirit: Bear';
 
-const rageMsg = ' is RAAAAAGING!'
-const endRageMsg =  ' is no longer raging.';
+			//All remaining values may be changed freely
 
-const errorSelectBarbarian = 'Please select a single barbarian token.';
-const errorNoRage = ' does not have any rage left, time for a long rest!';
-const warnMacroNotFound = ' is not a valid macro name, please fix. Rage toggle successful but unable to alter macro.';
-const errorSelectToken = 'Please select a token.';
-const failRevert = 'Failed to revert global melee weapon attack bonus, please check manually.';
+			//Rage chat message flavor text. Actor's name appears immediately before these two strings in the message.
+			const rageMsg = ' is RAAAAAGING!'
+			const endRageMsg =  ' is no longer raging.';
 
+			//error and warning messages
+			const errorSelectBarbarian = 'Please select a single barbarian token.';
+			const errorNoRage = ' does not have any rage left, time for a long rest!';
+			const warnMacroNotFound = ' is not a valid macro name, please fix. Rage toggle successful but unable to alter macro.';
+			const errorSelectToken = 'Please select a token.';
+			const errorFailRevert = 'Failed to revert global melee weapon attack bonus, please check manually.';
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -118,11 +130,16 @@ if (macroActor !== undefined && macroActor !== null) {
 	if (barb !== undefined && barb !== null) {
 		chatMsg = `${macroActor.name} + rageMsg`;
 		let enabled = false;
-		// store the state of the rage toggle in flags
+		// Store the state of the rage toggle flags that indicate if rage is active or not
 		if (macroActor.data.flags.rageMacro !== null && macroActor.data.flags.rageMacro !== undefined) {
 			enabled = true;
 		}
-		
+
+		// Store whether there is a rage damage bonus currently active
+		if (macroActor.data.flags.rageDmgAdded == 'true') {
+			rageDmgAdded = true;
+		}
+
 		//Calculate rage value for use in damage reversion and application
 		// Determining the barbarian level
 		let barblvl = barb.data.data.levels;
@@ -141,33 +158,35 @@ if (macroActor !== undefined && macroActor !== null) {
 			//revert damage resistances
 			obj['data.traits.dr'] = macroActor.data.flags.rageMacro.oldResistances;
 
-			//carefully revert global mwak bonus to original value
-			if (dmg == rageDmg || dmg == null || dmg == undefined || dmg == '' || dmg == 0){
-				console.log('removing simple rage damage');
-				obj['data.bonuses.mwak.damage']='';
-			} else {
-				console.log('removing complex rage damage');
-				let patt = `\\s\\+\\s${rageDmg}($|[^0123456789dkrxcm(@{])`;
-				let result = dmg.search(patt);
-				if (result !== -1) {
-					let len = ('' + rageDmg).length;
-					let origDmg = duplicate(dmg);
-					let firstHalfDmg = duplicate(dmg).substring(0,result);
-					//Test String: 2d6 + 2 + 2d6
-					let lastHalfDmg = duplicate(dmg).substring(result+3+len, origDmg.length);
-					dmg = `${firstHalfDmg}${lastHalfDmg}`;
-					obj['data.bonuses.mwak.damage']=dmg;
+			//carefully revert rage global mwak damage bonus to original value, if that bonus is active
+			if(rageDmgAdded) {
+				if (dmg == rageDmg || dmg == null || dmg == undefined || dmg == '' || dmg == 0){
+					console.log('Removing simple rage damage');
+					obj['data.bonuses.mwak.damage']='';
 				} else {
-					ui.notifications.warn(`${failRevert}`);
+					console.log('Removing complex rage damage');
+					let patt = `\\s\\+\\s${rageDmg}($|[^0123456789dkrxcm(@{])`;
+					let result = dmg.search(patt);
+					if (result !== -1) {
+						let len = ('' + rageDmg).length;
+						let origDmg = duplicate(dmg);
+						let firstHalfDmg = duplicate(dmg).substring(0,result);
+						//Test String: 2d6 + 2 + 2d6
+						let lastHalfDmg = duplicate(dmg).substring(result+3+len, origDmg.length);
+						dmg = `${firstHalfDmg}${lastHalfDmg}`;
+						obj['data.bonuses.mwak.damage']=dmg;
+					} else {
+						ui.notifications.error(`${errorFailRevert}`);
+					}
 				}
 			}
 			macroActor.update(obj);
-			
+
 		// if rage is disabled, enable it
 		} else {
 			if (deductResource) {
 				let hasAvailableResource = false;
-				let newResources = duplicate(macroActor.data.data.resources)				
+				let newResources = duplicate(macroActor.data.data.resources)
 				let obj = {}
 				// Look for Resources under the Core macroActor data
 				let resourceKey = Object.keys(macroActor.data.data.resources).filter(k => macroActor.data.data.resources[k].label === `${rageFeatureName}`).shift();
@@ -180,10 +199,6 @@ if (macroActor !== undefined && macroActor !== null) {
 				if (!hasAvailableResource) {
 					ui.notifications.error(`${macroActor.name} ${errorNoRage}`);
 					noRage=true;
-				}
-				if (macroActor.sheet.rendered) {
-					// Update the macroActor sheet if it is currently open
-					macroActor.render(true);
 				}
 			}
 			
@@ -218,6 +233,7 @@ if (macroActor !== undefined && macroActor !== null) {
 			
 				// For Strength barbarians, update global melee weapon attack bonus to include rage bonus
 				if (strAttacks) {
+					obj['flags.rageMacro.rageDmgAdded'] = 'true';
 					// Preserve old mwak damage bonus if there was one, just in case
 					obj['flags.rageMacro.oldDmg'] = JSON.parse(JSON.stringify(dmg));
 				
@@ -228,7 +244,7 @@ if (macroActor !== undefined && macroActor !== null) {
 						obj['data.bonuses.mwak.damage'] = rageDmg;
 					} else {
 						console.log('Adding complex rage damage');
-					obj['data.bonuses.mwak.damage'] = `${dmg} + ${rageDmg}`;
+						obj['data.bonuses.mwak.damage'] = `${dmg} + ${rageDmg}`;
 					}
 					
 					macroActor.update(obj);
