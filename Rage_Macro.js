@@ -165,6 +165,7 @@ if (macroActor !== undefined && macroActor !== null) {
 			obj['data.traits.dr'] = macroActor.data.flags.rageMacro.oldResistances;
 
 			//carefully revert rage global mwak damage bonus to original value, if that bonus is active
+			//eventually want to add support so only last instance found is replaced.
 			if(rageDmgAdded) {
 				if (dmg == rageDmg || dmg == null || dmg == undefined || dmg == '' || dmg == 0){
 					console.log('Removing simple rage damage');
