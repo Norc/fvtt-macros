@@ -4,8 +4,6 @@
 //
 //		UPDATES:		1.	Fixed errors resulting from declarations of "actor" and "token" in a script macro. 
 //							Added automatic Totem Spirit: Bear detection and resistance application 
-//							PLEASE NOTE: A minor update to the Totem Spirit item's name in the character sheet is needed if 
-//							the VTTA Beyond Integration was not used to create sheet. See Bonus Tip 2 below
 //							Added error messages for trying to rage with no token or no barbarian selected
 //						2.	(Felix) Added resource/usage deduction and errors (re-added after accidentally overwriting the addition)
 //							Fixed rage damage at level 8
@@ -20,7 +18,7 @@
 //						4.	(2020/06/04) 
 //							Fixed bug with experimental macro name/icon toggle only by renaming "actor" and "token"
 //							Added basic localization support to allow searching for translated class features
-//						5.	(2020/06/09)
+//						5.	(2020/06/10)
 //							Rework to rage damage logic under the hood for edge case (other changes to bonus damage mid-combat) 
 //							Removed logic that was causing multiple character sheets to open in some cases
 //							Enhanced localization support
