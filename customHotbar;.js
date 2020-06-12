@@ -24,7 +24,13 @@ class CustomHotbar extends Hotbar {
        */
       this._hover = null;
     }
-
+  
+    /* something like this?
+    activateListeners(html) {
+        super.activateListeners(html);
+      }
+    */
+   
   /** @override */
   static get defaultOptions() {
     return mergeObject(super.defaultOptions, {
@@ -39,7 +45,7 @@ class CustomHotbar extends Hotbar {
 	/* -------------------------------------------- */
 
   /** @override */
- /*
+ 
   getData(options) {
     this.macros = this._getCustomMacrosByPage(this.page);
   return {
@@ -48,7 +54,7 @@ class CustomHotbar extends Hotbar {
     barClass: this._collapsed ? "collapsed" : ""
   };
 }
-*/
+
   /* -------------------------------------------- */
 
 /**
@@ -57,10 +63,9 @@ class CustomHotbar extends Hotbar {
  * @returns {Array}
  * @private
  */
-/*
- _getCustomMacrosByPage(page) {
-//?? extend game.user with this method?? override getHotbarMacros itself, maybe add boolean parameter to indicate if it's Custom?   
-  const macros = game.user.getHotbarMacros(page);
+
+ _getCustomMacrosByPage(page) { 
+  const macros = this.getCustomHotbarMacros(page);
   for ( let [i, m] of macros.entries() ) {
     m.key = i<9 ? i+1 : 0;
     m.cssClass = m.macro ? "active" : "inactive";
@@ -68,7 +73,24 @@ class CustomHotbar extends Hotbar {
   }
   return macros;
 }
-*/
+
+	/* -------------------------------------------- */
+
+  /**
+   * Get an Array of Macro Entities on this User's Hotbar by page
+   * @param {number} page     The hotbar page number
+   * @return {Array.<Object>}
+   */
+  getCustomHotbarMacros(page=1) {
+    const macros = new Array(10).fill(null);
+    const start = (page-1) * 10;
+    return macros.slice(start, start+10).map((m, i) => {
+      return {
+        slot: start + i + 1,
+        macro: m ? game.macros.get(m) : null
+      };
+    });
+  }
 
         /* -------------------------------------------- */
   /**
@@ -258,6 +280,8 @@ let obj = {
 };
 await hotTest.render(true, obj);
 
+
+
 var style = document.createElement('style');
 style.innerHTML = 
     '#custom-hotbar {' +
@@ -357,12 +381,6 @@ style.innerHTML =
         'line-height: 8px;' +
     '}' +
 
-/*  Disabled for initial release
-    '#custom-hotbar .bar-controls a.page-control {' +
-        'font-size: 1.5em;' +
-        'line-height: 12px;' +
-    '}' +
-*/
     '#custom-hotbar .macro.inactive {' +
         'box-shadow: 0 0 5px #444 inset;' +
     '}' +
@@ -401,19 +419,28 @@ style.innerHTML =
         'display: none;' +
     '}' + 
 
+    '#custom-hotbar-directory-controls {' +
+        'max-height: 33%' +
+    '}' +
+
+
     //Disable macro directory (unnecessary) and page controls (for now)
     '#custom-hotbar-directory-controls a#custom-macro-directory {' +
         'display: none;' +
     '}' +
 
-    '#custom-hotbar-directory-controls {' +
-        'max-height: 33%' +
-    '}' +
-
     '#custom-hotbar-page-controls {' +
         'display: none;' +
     '}'
-;   
+  
+/*  Disabled for initial release
+    '#custom-hotbar .bar-controls a.page-control {' +
+        'font-size: 1.5em;' +
+        'line-height: 12px;' +
+    '}' +
+*/
+
+;
 
 var ref = document.querySelector('script');
 ref.parentNode.insertBefore(style, ref);
