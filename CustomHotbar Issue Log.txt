@@ -1,0 +1,6 @@
+CustomHotbar Issue Log
+Up and down arrows change page numbers in an erratic fashion
+clicking to create and delete macros has strange effects
+can't drop on CustomHotbar
+can't remove from custom CustomHotbar
+context menu plays peekaboo

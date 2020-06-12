@@ -1,4 +1,4 @@
-class customHotbar extends Hotbar {
+class CustomHotbar extends Hotbar {
     //copied from foundy.js line 21117 on 20200611
 	constructor(options) {
         super(options);
@@ -35,9 +35,44 @@ class customHotbar extends Hotbar {
     });
   }    
 
+  
+	/* -------------------------------------------- */
+
+  /** @override */
+ /*
+  getData(options) {
+    this.macros = this._getCustomMacrosByPage(this.page);
+  return {
+    page: this.page,
+    macros: this.macros,
+    barClass: this._collapsed ? "collapsed" : ""
+  };
+}
+*/
+  /* -------------------------------------------- */
+
+/**
+ * Get the Array of Macro (or null) values that should be displayed on a numbered page of the custom hotbar
+ * @param {number} page
+ * @returns {Array}
+ * @private
+ */
+/*
+ _getCustomMacrosByPage(page) {
+//?? extend game.user with this method?? override getHotbarMacros itself, maybe add boolean parameter to indicate if it's Custom?   
+  const macros = game.user.getHotbarMacros(page);
+  for ( let [i, m] of macros.entries() ) {
+    m.key = i<9 ? i+1 : 0;
+    m.cssClass = m.macro ? "active" : "inactive";
+    m.icon = m.macro ? m.macro.data.img : null;
+  }
+  return macros;
+}
+*/
+
         /* -------------------------------------------- */
   /**
-   * Collapse the Hotbar, minimizing its display.
+   * Collapse the customHotbar, minimizing its display.
    * @return {Promise}    A promise which resolves once the collapse animation completes
    */
   async collapse() {
@@ -57,7 +92,7 @@ class customHotbar extends Hotbar {
   
  	/* -------------------------------------------- */
   /**
-   * Expand the Hotbar, displaying it normally.
+   * Expand the customHotbar, displaying it normally.
    * @return {Promise}    A promise which resolves once the expand animation completes
    */
   expand() {
@@ -76,6 +111,8 @@ class customHotbar extends Hotbar {
     });
   } 
 
+
+
   	/* -------------------------------------------- */
   /*  Event Listeners and Handlers
 	/* -------------------------------------------- */
@@ -85,14 +122,129 @@ class customHotbar extends Hotbar {
     // Macro actions
     html.find('#custom-bar-toggle').click(this._onToggleBar.bind(this));
     html.find(".macro").click(this._onClickMacro.bind(this)).hover(this._onHoverMacro.bind(this));
-    html.find(".page-control").click(this._onClickPageControl.bind(this));
+    //    Disable pages for now, will just work with first page.
+    //    html.find(".page-control").click(this._onClickPageControl.bind(this));
     // Activate context menu
     this._contextMenu(html);
   }
 
 }
 
-let hotTest = new customHotbar();
+  /* -------------------------------------------- */
+
+  /**
+   * Handle number key presses
+   * @param {Event} event       The original digit key press
+   * @param {boolean} up        Is it a keyup?
+   * @param {Object}modifiers   What modifiers affect the keypress?
+   * @private
+   */
+/*
+   _onDigit(event, up, modifiers) {
+    if ( modifiers.hasFocus || up ) return;
+    const num = parseInt(event.key);
+//??     If (modifiers.key is not Shift) {
+    const slot = ui.hotbar.macros.find(m => m.key === num);
+//??     } else {    
+//??     const slot = ui.customHotbar.macros.find(m => m.key === num);
+//??     }
+    if ( slot.macro ) slot.macro.execute();
+    this._handled.add(modifiers.key);
+  }
+*/
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle DELETE Keypress Events
+   * @param {KeyboardEvent} event     The originating keyboard event
+   * @param {boolean} up              Is the key being released?
+   * @param {Object} modifiers        The identified modifiers attached to this keypress
+   * @private
+   */
+ /*
+   _onDelete(event, up, modifiers) {
+    if ( this.hasFocus ) return;
+    event.preventDefault();
+
+    // Remove hotbar Macro
+    if ( ui.hotbar._hover ) game.user.assignHotbarMacro(null, ui.hotbar._hover);
+//??    if ( ui.customHotbar._hover ) game.user.assignCustomHotbarMacro(null, ui.customHotbar._hover);
+
+    // Delete placeables from Canvas layer
+    else if ( canvas.ready && ( canvas.activeLayer instanceof PlaceablesLayer ) ) {
+      return canvas.activeLayer._onDeleteKey(event);
+    }
+  }
+*/  
+
+  /* -------------------------------------------- */
+
+  /**
+   * Initialize core UI elements
+   */
+/*  
+  initializeUI() {
+
+    // Initialize all applications
+    for ( let [k, cls] of Object.entries(CONFIG.ui) ) {
+      ui[k] = new cls();
+    }
+
+    // Render some applications
+    ui.nav.render(true);
+    ui.notifications.render(true);
+    ui.sidebar.render(true);
+    ui.players.render(true);
+    ui.hotbar.render(true);
+//??    ui.customHotbar.render(true);  
+    ui.webrtc.render(true);
+    ui.pause.render(true);
+  }
+*/
+
+  /**
+   * Event handler for the drop portion of a drag-and-drop event.
+   * @private
+   */
+/*
+   _onDrop(event) {
+    event.preventDefault();
+
+    // Try to extract the data
+    let data;
+    try {
+      data = JSON.parse(event.dataTransfer.getData('text/plain'));
+    }
+    catch (err) {
+      return false;
+    }
+
+    // Acquire the cursor position transformed to Canvas coordinates
+    const [x, y] = [event.clientX, event.clientY];
+    const t = this.stage.worldTransform;
+    data.x = (x - t.tx) / canvas.stage.scale.x;
+    data.y = (y - t.ty) / canvas.stage.scale.y;
+
+    // Dropped Actor
+    if ( data.type === "Actor" ) canvas.tokens._onDropActorData(event, data);
+    
+    // Dropped Journal Entry
+    else if ( data.type === "JournalEntry" ) canvas.notes._onDropData(event, data);
+
+    // Dropped Macro (clear slot)
+    else if ( data.type === "Macro" ) {
+//??      game.user.assignHotbarMacro(null, data.slot);
+    }
+
+    // Dropped Tile artwork
+    else if ( data.type === "Tile" ) {
+      return canvas.tiles._onDropTileData(event, data);
+    }
+  }
+*/
+
+let hotTest = new CustomHotbar();
 hotTest.content = hotTest.getData();
 let obj = {
     left: 100,
@@ -205,11 +357,12 @@ style.innerHTML =
         'line-height: 8px;' +
     '}' +
 
+/*  Disabled for initial release
     '#custom-hotbar .bar-controls a.page-control {' +
         'font-size: 1.5em;' +
         'line-height: 12px;' +
     '}' +
-
+*/
     '#custom-hotbar .macro.inactive {' +
         'box-shadow: 0 0 5px #444 inset;' +
     '}' +
@@ -243,19 +396,24 @@ style.innerHTML =
     '#custom-hotbar #custom-hotbar-directory-controls {' +
         'pointer-events: all;' +
     '}' +
-/*
-    '#custom-hotbar #custom-bar-toggle {' +
-        'max-height: 33%;' + 
+
+    '#custom-hotbar-directory-controls a#custom-macro-directory {' +
+        'display: none;' +
+    '}' + 
+
+    //Disable macro directory (unnecessary) and page controls (for now)
+    '#custom-hotbar-directory-controls a#custom-macro-directory {' +
+        'display: none;' +
     '}' +
-*/
+
     '#custom-hotbar-directory-controls {' +
         'max-height: 33%' +
     '}' +
 
-    '#custom-hotbar-directory-controls a#custom-macro-directory {' +
+    '#custom-hotbar-page-controls {' +
         'display: none;' +
     '}'
-;
+;   
 
 var ref = document.querySelector('script');
 ref.parentNode.insertBefore(style, ref);
