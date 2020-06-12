@@ -1,14 +1,99 @@
-let hotTest = new Hotbar();
-hotTest.content = hotTest.getData();
-hotTest.options = {
-    id: "norcHotbar",
-    template: "templates/hud/customHotbar.html", 
-    popOut: false,
-    dragDrop: [{ dragSelector: ".macro", dropSelector: "#custom-macro-list" }]
-  };
-hotTest.ID="custom-hotbar";
-hotTest.element = "div#custom-hotbar.flexrow";
+class customHotbar extends Hotbar {
+    //copied from foundy.js line 21117 on 20200611
+	constructor(options) {
+        super(options);
+        game.macros.apps.push(this);
+      /**
+       * The currently viewed macro page
+       * @type {number}
+       */
+      this.page = 1;
+      /**
+       * The currently displayed set of macros
+       * @type {Array}
+       */
+      this.macros = [];
+      /**
+       * Track collapsed state
+       * @type {boolean}
+       */
+      this._collapsed = false;
+      /**
+       * Track which hotbar slot is the current hover target, if any
+       * @type {number|null}
+       */
+      this._hover = null;
+    }
 
+  /** @override */
+  static get defaultOptions() {
+    return mergeObject(super.defaultOptions, {
+      id: "custom-hotbar",
+      template: "templates/hud/customHotbar.html",
+      popOut: false,
+      dragDrop: [{ dragSelector: ".macro", dropSelector: "#custom-macro-list" }]
+    });
+  }    
+
+        /* -------------------------------------------- */
+  /**
+   * Collapse the Hotbar, minimizing its display.
+   * @return {Promise}    A promise which resolves once the collapse animation completes
+   */
+  async collapse() {
+    if ( this._collapsed ) return true;
+    const toggle = this.element.find("#custom-bar-toggle");
+    const icon = toggle.children("i");
+    const bar = this.element.find("#custom-action-bar");
+    return new Promise(resolve => {
+      bar.slideUp(200, () => {
+        bar.addClass("collapsed");
+        icon.removeClass("fa-caret-down").addClass("fa-caret-up");
+        this._collapsed = true;
+        resolve(true);
+      });
+    });
+  }
+  
+ 	/* -------------------------------------------- */
+  /**
+   * Expand the Hotbar, displaying it normally.
+   * @return {Promise}    A promise which resolves once the expand animation completes
+   */
+  expand() {
+    if ( !this._collapsed ) return true;
+    const toggle = this.element.find("#custom-bar-toggle");
+    const icon = toggle.children("i");
+    const bar = this.element.find("#custom-action-bar");
+    return new Promise(resolve => {
+      bar.slideDown(200, () => {
+        bar.css("display", "");
+        bar.removeClass("collapsed");
+        icon.removeClass("fa-caret-up").addClass("fa-caret-down");
+        this._collapsed = false;
+        resolve(true);
+      });
+    });
+  } 
+
+  	/* -------------------------------------------- */
+  /*  Event Listeners and Handlers
+	/* -------------------------------------------- */
+  /** @override */
+  activateListeners(html) {
+    super.activateListeners(html);
+    // Macro actions
+    html.find('#custom-bar-toggle').click(this._onToggleBar.bind(this));
+    html.find(".macro").click(this._onClickMacro.bind(this)).hover(this._onHoverMacro.bind(this));
+    html.find(".page-control").click(this._onClickPageControl.bind(this));
+    // Activate context menu
+    this._contextMenu(html);
+  }
+
+}
+
+let hotTest = new customHotbar();
+hotTest.content = hotTest.getData();
 let obj = {
     left: 100,
     top: 100,
@@ -19,7 +104,6 @@ let obj = {
     renderContext: "Norc",
     renderData: "manual"
 };
-
 await hotTest.render(true, obj);
 
 var style = document.createElement('style');
@@ -159,11 +243,11 @@ style.innerHTML =
     '#custom-hotbar #custom-hotbar-directory-controls {' +
         'pointer-events: all;' +
     '}' +
-
+/*
     '#custom-hotbar #custom-bar-toggle {' +
         'max-height: 33%;' + 
     '}' +
-
+*/
     '#custom-hotbar-directory-controls {' +
         'max-height: 33%' +
     '}' +
