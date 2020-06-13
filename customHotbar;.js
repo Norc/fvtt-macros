@@ -98,7 +98,7 @@ class CustomHotbar extends Hotbar {
    */
   async assignCustomHotbarMacro(macro, slot, {fromSlot=null}={}) {
     if ( !(macro instanceof Macro) && (macro !== null) ) throw new Error("Invalid Macro provided");
-    const myCustomHotbar = this;
+    let myCustomHotbar = ui.CustomHotbar.macros;
 
     // If a slot was not provided, get the first available slot
     slot = slot ? parseInt(slot) : Array.fromRange(10).find(i => !(i in myCustomHotbar));
@@ -116,7 +116,8 @@ class CustomHotbar extends Hotbar {
       delete update[fromSlot];
       update[`-=${fromSlot}`] = null;
     }
-    return update;
+    myCustomHotbar = update;
+    return myCustomHotbar;
   };
 
         /* -------------------------------------------- */
@@ -185,7 +186,7 @@ class CustomHotbar extends Hotbar {
         name: "Remove",
         icon: '<i class="fas fa-times"></i>',
         callback: li => {
-          ui.CustomHotbar = this.assignCustomHotbarMacro(null, li.data("slot"));
+          ui.CustomHotbar.macros = this.assignCustomHotbarMacro(null, li.data("slot"));
         }
       },
       {
@@ -241,7 +242,7 @@ class CustomHotbar extends Hotbar {
 
     // Only handle Macro drops
     const macro = await this._getDropMacro(data);
-    if ( macro ) ui.CustomHotbar = await this.assignCustomHotbarMacro(macro, li.dataset.slot, {fromSlot: data.slot});
+    if ( macro ) ui.CustomHotbar.macros = await this.assignCustomHotbarMacro(macro, li.dataset.slot, {fromSlot: data.slot});
   }
 
   /* -------------------------------------------- */
@@ -258,7 +259,7 @@ class CustomHotbar extends Hotbar {
     // Case 1 - create a new Macro
     if ( li.classList.contains("inactive") ) {
       const macro = await Macro.create({name: "New Macro", type: "chat", scope: "global"});
-      ui.CustomHotbar = await this.assignCustomHotbarMacro(macro, li.dataset.slot);
+      ui.CustomHotbar.macros = await this.assignCustomHotbarMacro(macro, li.dataset.slot);
       macro.sheet.render(true);
     }
 
@@ -271,6 +272,7 @@ class CustomHotbar extends Hotbar {
 
 }
 
+ 
   /* -------------------------------------------- */
 
   /**
