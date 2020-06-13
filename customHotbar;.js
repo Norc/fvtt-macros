@@ -25,17 +25,11 @@ class CustomHotbar extends Hotbar {
       this._hover = null;
     }
   
-    /* something like this?
-    activateListeners(html) {
-        super.activateListeners(html);
-      }
-    */
-   
   /** @override */
   static get defaultOptions() {
     return mergeObject(super.defaultOptions, {
       id: "custom-hotbar",
-      template: "templates/hud/customHotbar.html",
+      template: "templates/hud/CustomHotbar.html",
       popOut: false,
       dragDrop: [{ dragSelector: ".macro", dropSelector: "#custom-macro-list" }]
     });
@@ -92,9 +86,42 @@ class CustomHotbar extends Hotbar {
     });
   }
 
+	/* -------------------------------------------- */
+
+  /**
+   * Assign a Macro to a numbered custom hotbar slot between 1 and 10
+   * eventually expand this to a full 50 later maybe
+   * @param {Macro|null} macro  The Macro entity to assign
+   * @param {number} slot       The integer Hotbar slot to fill
+   * @param {number} [fromSlot] An optional origin slot from which the Macro is being shifted
+   * @return {Promise}          A Promise which resolves once the User update is complete
+   */
+  async assignCustomHotbarMacro(macro, slot, {fromSlot=null}={}) {
+    if ( !(macro instanceof Macro) && (macro !== null) ) throw new Error("Invalid Macro provided");
+    const myCustomHotbar = this;
+
+    // If a slot was not provided, get the first available slot
+    slot = slot ? parseInt(slot) : Array.fromRange(10).find(i => !(i in myCustomHotbar));
+    if ( !slot ) throw new Error("No available Hotbar slot exists");
+    if ( slot < 1 || slot > 10 ) throw new Error("Invalid Hotbar slot requested");
+
+    // Update the hotbar data
+    const update = duplicate(myCustomHotbar);
+    if ( macro ) update[slot] = macro.id;
+    else {
+      delete update[slot];
+      update[`-=${slot}`] = null;
+    }
+    if ( fromSlot && (fromSlot in myCustomHotbar) ) {
+      delete update[fromSlot];
+      update[`-=${fromSlot}`] = null;
+    }
+    return update;
+  };
+
         /* -------------------------------------------- */
   /**
-   * Collapse the customHotbar, minimizing its display.
+   * Collapse the myCustomHotbar, minimizing its display.
    * @return {Promise}    A promise which resolves once the collapse animation completes
    */
   async collapse() {
@@ -114,7 +141,7 @@ class CustomHotbar extends Hotbar {
   
  	/* -------------------------------------------- */
   /**
-   * Expand the customHotbar, displaying it normally.
+   * Expand the CustomHotbar, displaying it normally.
    * @return {Promise}    A promise which resolves once the expand animation completes
    */
   expand() {
@@ -133,7 +160,52 @@ class CustomHotbar extends Hotbar {
     });
   } 
 
+  /* -------------------------------------------- */
 
+  /**
+   * Create a Context Menu attached to each Macro button
+   * @param html
+   * @private
+   */
+  _contextMenu(html) {
+    new ContextMenu(html, ".macro", [
+      {
+        name: "Edit",
+        icon: '<i class="fas fa-edit"></i>',
+        condition: li => {
+          const macro = game.macros.get(li.data("macro-id"));
+          return macro ? macro.owner : false;
+        },
+        callback: li => {
+          const macro = game.macros.get(li.data("macro-id"));
+          macro.sheet.render(true);
+        }
+      },
+      {
+        name: "Remove",
+        icon: '<i class="fas fa-times"></i>',
+        callback: li => {
+          ui.CustomHotbar = this.assignCustomHotbarMacro(null, li.data("slot"));
+        }
+      },
+      {
+        name: "Delete",
+        icon: '<i class="fas fa-trash"></i>',
+        condition: li => {
+          const macro = game.macros.get(li.data("macro-id"));
+          return macro ? macro.owner : false;
+        },
+        callback: li => {
+          const macro = game.macros.get(li.data("macro-id"));
+          Dialog.confirm({
+            title: `${game.i18n.localize("MACRO.Delete")} ${macro.name}`,
+            content: game.i18n.localize("MACRO.DeleteConfirm"),
+            yes: macro.delete.bind(macro)
+          });
+        }
+      },
+    ]);
+  }
 
   	/* -------------------------------------------- */
   /*  Event Listeners and Handlers
@@ -143,11 +215,58 @@ class CustomHotbar extends Hotbar {
     super.activateListeners(html);
     // Macro actions
     html.find('#custom-bar-toggle').click(this._onToggleBar.bind(this));
-    html.find(".macro").click(this._onClickMacro.bind(this)).hover(this._onHoverMacro.bind(this));
+    //html.find("#custom-macro-directory").click(ev => ui.macros.renderPopout(true));
     //    Disable pages for now, will just work with first page.
     //    html.find(".page-control").click(this._onClickPageControl.bind(this));
     // Activate context menu
-    this._contextMenu(html);
+//    ui.CustomHotbar._contextMenu(html);
+  }
+
+  /** @override */
+  async _onDrop(event) {
+    event.preventDefault();
+
+    // Try to extract the data
+    let data;
+    try {
+      data = JSON.parse(event.dataTransfer.getData('text/plain'));
+    }
+    catch (err) { return }
+
+    // Get the drop target
+    const li = event.target.closest(".macro");
+
+    // Allow for a Hook function to handle the event
+    if ( Hooks.call("hotbarDrop", this, data, li.dataset.slot) === false ) return;
+
+    // Only handle Macro drops
+    const macro = await this._getDropMacro(data);
+    if ( macro ) ui.CustomHotbar = await this.assignCustomHotbarMacro(macro, li.dataset.slot, {fromSlot: data.slot});
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle left-click events to
+   * @param event
+   * @private
+   */
+  async _onClickMacro(event) {
+    event.preventDefault();
+    const li = event.currentTarget;
+
+    // Case 1 - create a new Macro
+    if ( li.classList.contains("inactive") ) {
+      const macro = await Macro.create({name: "New Macro", type: "chat", scope: "global"});
+      ui.CustomHotbar = await this.assignCustomHotbarMacro(macro, li.dataset.slot);
+      macro.sheet.render(true);
+    }
+
+    // Case 2 - trigger a Macro
+    else {
+      const macro = game.macros.get(li.dataset.macroId);
+      return macro.execute();
+    }
   }
 
 }
@@ -168,7 +287,7 @@ class CustomHotbar extends Hotbar {
 //??     If (modifiers.key is not Shift) {
     const slot = ui.hotbar.macros.find(m => m.key === num);
 //??     } else {    
-//??     const slot = ui.customHotbar.macros.find(m => m.key === num);
+//??     const slot = ui.CustomHotbar.macros.find(m => m.key === num);
 //??     }
     if ( slot.macro ) slot.macro.execute();
     this._handled.add(modifiers.key);
@@ -190,8 +309,8 @@ class CustomHotbar extends Hotbar {
     event.preventDefault();
 
     // Remove hotbar Macro
-    if ( ui.hotbar._hover ) game.user.assignHotbarMacro(null, ui.hotbar._hover);
-//??    if ( ui.customHotbar._hover ) game.user.assignCustomHotbarMacro(null, ui.customHotbar._hover);
+    if ( ui.hotbar._hover ) this.assignHotbarMacro(null, ui.hotbar._hover);
+//??    if ( ui.CustomHotbar._hover ) this.assignCustomHotbarMacro(null, ui.CustomHotbar._hover);
 
     // Delete placeables from Canvas layer
     else if ( canvas.ready && ( canvas.activeLayer instanceof PlaceablesLayer ) ) {
@@ -200,36 +319,12 @@ class CustomHotbar extends Hotbar {
   }
 */  
 
-  /* -------------------------------------------- */
-
-  /**
-   * Initialize core UI elements
-   */
-/*  
-  initializeUI() {
-
-    // Initialize all applications
-    for ( let [k, cls] of Object.entries(CONFIG.ui) ) {
-      ui[k] = new cls();
-    }
-
-    // Render some applications
-    ui.nav.render(true);
-    ui.notifications.render(true);
-    ui.sidebar.render(true);
-    ui.players.render(true);
-    ui.hotbar.render(true);
-//??    ui.customHotbar.render(true);  
-    ui.webrtc.render(true);
-    ui.pause.render(true);
-  }
-*/
-
   /**
    * Event handler for the drop portion of a drag-and-drop event.
    * @private
    */
-/*
+
+   /*
    _onDrop(event) {
     event.preventDefault();
 
@@ -279,7 +374,7 @@ let obj = {
     renderData: "manual"
 };
 await hotTest.render(true, obj);
-
+ui.CustomHotbar = hotTest;
 
 
 var style = document.createElement('style');
@@ -375,12 +470,6 @@ style.innerHTML =
         'max-width: 100%;' +
     '}' +
 
-    '#custom-hotbar .bar-controls span.page-number {' +
-        'display: block;' +
-        'font-size: 20px;' +
-        'line-height: 8px;' +
-    '}' +
-
     '#custom-hotbar .macro.inactive {' +
         'box-shadow: 0 0 5px #444 inset;' +
     '}' +
@@ -391,6 +480,10 @@ style.innerHTML =
     
     '#custom-hotbar .macro.active:hover {' +
         'border: 1px solid white;' +
+    '}' +
+
+    '#custom-hotbar .macro.inactive:hover {' +
+        'border: 1px solid gray;' +
     '}' +
 
     '#custom-hotbar .macro .tooltip {' +
@@ -438,6 +531,12 @@ style.innerHTML =
         'font-size: 1.5em;' +
         'line-height: 12px;' +
     '}' +
+
+    '#custom-hotbar .bar-controls span.page-number {' +
+        'display: block;' +
+        'font-size: 20px;' +
+        'line-height: 8px;' +
+    '}'
 */
 
 ;
