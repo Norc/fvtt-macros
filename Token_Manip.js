@@ -71,4 +71,54 @@ console.log(`${hp_max}`);
 console.log(hp_cur);
 async function main() {
   await macroToken.actor.update({'data.attributes.hp.value': parseInt(hp_cur)});
+}
 main();
+
+let macroToken = canvas.tokens.controlled[0];
+let hp_cur = macroToken.actor.data.data.attributes.hp.value;
+let hp_max = macroToken.actor.data.data.attributes.hp.max;
+((hp_cur + 3) > hp_max) ? hp_cur = hp_max : hp_cur = hp_cur +=3;
+console.log(hp_cur);
+async function main() {
+  await macroToken.actor.update({'data.attributes.hp.value': parseInt(hp_cur)});
+}
+main();
+
+
+async function addHP(token, amount) {
+  let hp_cur = token.actor.data.data.attributes.hp.value;
+  let hp_max = token.actor.data.data.attributes.hp.max;
+  hp_cur = (hp_cur+amount > hp_max) ? hp_max : hp_cur+amount;
+  await macroToken.actor.update({'data.attributes.hp.value': parseInt(hp_cur)});
+}
+
+//Note: all macros automatically define token as canvas.tokens.controlled[0];
+addHP(token,3);
+
+function addHP(token, amount, update=false) {
+  let hp_cur = token.actor.data.data.attributes.hp.value;
+  let hp_max = token.actor.data.data.attributes.hp.max;
+  hp_cur = (hp_cur+amount > hp_max) ? hp_max : hp_cur+amount;
+  if (update) { token.actor.update({'data.attributes.hp.value': parseInt(hp_cur)}); }
+  return hp_cur;
+}
+addHP(token,3,true);
+
+function addHP(token, amount) {
+  let hp_cur = token.actor.data.data.attributes.hp.value;
+  let hp_max = token.actor.data.data.attributes.hp.max;
+  hp_cur = (hp_cur+amount > hp_max) ? hp_max : hp_cur+amount;
+  token.actor.update({'data.attributes.hp.value': parseInt(hp_cur)});
+  return hp_cur;
+}
+addHP(token,3);
+
+var allTokens = [];
+var allTokens = canvas.tokens.placeables;
+var ownedTokens = [];
+for (var i = 0; i < allTokens.length; i++) {
+    //this line needs LOTS of work. Also have to account for more than one owner
+    if (allTokens[i].OWNERPROPERTY == "GAME.USER") {
+        ownedTokens.push(ownedTokens[i]);
+    }
+}
